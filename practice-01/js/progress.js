@@ -3,7 +3,7 @@
 const totalTasks = 15;
 const completedTasks = 0;
 
-/// Вариант 2, 26 в списке
+// Вариант 2, 26 в списке
 
 if(totalTasks > 1000) console.log("Ошибка: превышена верхняя граница.");
 
