@@ -268,8 +268,6 @@ OK: Общий и индивидуальный наборы используют
 
 ## Отладка и клавиатура
 
-Указать точку останова в `handleFormSubmit`, значения сырого `draft`, результата `validateTaskDraft`, результата сервисной операции и строки JSON. Описать проверку формы и действий карточек с помощью Tab, Enter и Space, а также положение фокуса при начале и отмене редактирования.
-
 Указана точка останова в `handleFormSubmit`, значение сырого `draft`: `{id: '67', title: 'Teto', priority: 'high'}`. Результат `validateTaskDraft`: `{ok: true, value: id: 67, priority: "high", title: "Teto"}`.
 Результат сервисной операции: `{ok: true, tasks: Array(5)}`.
 Строка JSON: `'{"version":1,"tasks":[{"id":1,"title":"Изучить функции","completed":true,"priority":"medium"},{"id":4,"title":"Подготовить модель задач","completed":false,"priority":"high"},{"id":7,"title":"Проверить методы массивов","completed":false,"priority":"low"},{"id":10,"title":"Оформить README","completed":true,"priority":"medium"},{"id":67,"title":"Teto","completed":false,"priority":"high"}]}'`.
