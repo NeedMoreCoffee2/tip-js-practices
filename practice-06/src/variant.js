@@ -1,4 +1,4 @@
-export const variantNumber = null;
+export const variantNumber = 2;
 
 const FILTERS_BY_VARIANT = Object.freeze({
   1: Object.freeze({ completed: false }),
