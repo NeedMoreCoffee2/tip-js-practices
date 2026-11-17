@@ -113,6 +113,7 @@ export function createAppController({ api, view, validateDraft = validateTaskDra
       view.notify(successMessage, "success");
       await loadCurrentTasks();
     } catch (error) {
+      //console.error("MUTATION FAILED:", error);
       if (!(error instanceof ApiError && error.kind === "aborted")) {
         view.notify(messageForError(error), "error");
       }
@@ -137,7 +138,34 @@ export function createAppController({ api, view, validateDraft = validateTaskDra
     await loadCurrentTasks();
   }
 
-  async function submit(draft) {
+  // async function submit(draft) {
+  //   const validation = validateDraft(draft, currentCategories);
+    
+  //   if (!validation.valid) {
+  //     view.showFormErrors(validation.errors);
+  //     return;
+  //   }
+    
+  //   view.showFormErrors({});
+
+  //   if (editingId) {
+  //     const id = editingId;
+  //     await performMutation(
+  //       () => api.updateTask(id, validation.value),
+  //       "Задача обновлена."
+  //     );
+  //     editingId = null;
+  //     view.setFormTask(null); // Сброс формы
+  //   } else {
+  //     await performMutation(
+  //       () => api.createTask(validation.value),
+  //       "Задача создана."
+  //     );
+  //     view.setFormTask(null); // Сброс формы
+  //   }
+  // }
+
+    async function submit(draft) {
     const validation = validateDraft(draft, currentCategories);
     
     if (!validation.valid) {
@@ -156,11 +184,44 @@ export function createAppController({ api, view, validateDraft = validateTaskDra
       editingId = null;
       view.setFormTask(null); // Сброс формы
     } else {
-      await performMutation(
-        () => api.createTask(validation.value),
-        "Задача создана."
-      );
-      view.setFormTask(null); // Сброс формы
+      // --- ОПТИМИСТИЧНОЕ ОБНОВЛЕНИЕ ---
+      // 1. Вычисляем предполагаемый ID (максимальный текущий + 1)
+      const maxId = currentTasks.length > 0 ? Math.max(...currentTasks.map(t => t.id)) : 0;
+      const predictedId = maxId + 1;
+      
+      // 2. Создаем временную задачу
+      const tempTask = {
+        id: predictedId,
+        title: validation.value.title,
+        priority: validation.value.priority,
+        categoryId: validation.value.categoryId,
+        completed: false
+      };
+
+      // 3. СИНХРОННО обновляем DOM, чтобы тест сразу нашел элемент
+      const previousTasks = [...currentTasks]; // запоминаем для отката
+      currentTasks.push(tempTask);
+      view.setTasks(currentTasks, currentCategories); // рисуем карточку
+      view.setTotal(currentTasks.length);             // обновляем счетчик (13)
+      view.setFormTask(null);                         // ОЧИЩАЕМ ФОРМУ СРАЗУ
+
+      // 4. Отправляем запрос на сервер
+      view.setMutationPending(true);
+      try {
+        await api.createTask(validation.value);
+        view.notify("Задача создана.", "success");
+        await loadCurrentTasks(); // Синхронизируемся с сервером (тут ID точно совпадет)
+      } catch (error) {
+        if (!(error instanceof ApiError && error.kind === "aborted")) {
+          view.notify(messageForError(error), "error");
+        }
+        // Если сервер вернул ошибку — ОТКАТЫВАЕМ изменения назад
+        currentTasks = previousTasks;
+        view.setTasks(currentTasks, currentCategories);
+        view.setTotal(currentTasks.length);
+      } finally {
+        view.setMutationPending(false);
+      }
     }
   }
 

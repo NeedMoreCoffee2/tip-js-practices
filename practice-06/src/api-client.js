@@ -193,13 +193,27 @@ export function createApiClient({
       throw new ApiError(`Ожидался JSON, получен: ${contentType || "(пусто)"}`, { kind: "invalid-response", url });
     }
 
-    // 10. Парсинг JSON
+  //   //10. Парсинг JSON
+  //   try {
+  //     return await response.json();
+  //   } catch (error) {
+  //     throw new ApiError("Не удалось разобрать JSON", { kind: "invalid-response", url, cause: error });
+  //   }
+  // }
+
+  // 10. Парсинг JSON
     try {
       return await response.json();
     } catch (error) {
+      if (error?.name === "TimeoutError" || error?.name === "AbortError") {
+        // Сигнал истёк во время чтения тела
+        throw new ApiError("Превышено время ожидания", { kind: "timeout", url, cause: error });
+      }
       throw new ApiError("Не удалось разобрать JSON", { kind: "invalid-response", url, cause: error });
     }
   }
+
+  
 
   return { requestJson };
 }
